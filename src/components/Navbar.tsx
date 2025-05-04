@@ -9,7 +9,7 @@ export const Navbar: React.FC = () => {
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
               <img
-                src="/images/logo.png"
+                src="/court-reservation-demo/images/logo.png"
                 alt="Logo"
                 className="h-12 w-auto"
               />

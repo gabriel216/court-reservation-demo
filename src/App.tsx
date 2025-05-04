@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { CourtDetails } from './pages/CourtDetails';
 import { PaymentPage } from './pages/PaymentPage';
 import { Home } from './pages/Home';
@@ -8,7 +8,7 @@ import { ScrollToTop } from './components/ScrollToTop';
 
 const App: React.FC = () => {
   return (
-    <Router>
+    <BrowserRouter basename="/court-reservation-demo">
       <ScrollToTop />
       <div className="min-h-screen bg-gray-50">
         <Navbar />
@@ -18,7 +18,7 @@ const App: React.FC = () => {
           <Route path="/payment" element={<PaymentPage />} />
         </Routes>
       </div>
-    </Router>
+    </BrowserRouter>
   );
 };
 
