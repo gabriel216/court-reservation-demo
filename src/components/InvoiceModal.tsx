@@ -18,7 +18,6 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
   onClose,
   court,
   timeSlots,
-  userName,
   date,
   paymentMethod,
 }) => {

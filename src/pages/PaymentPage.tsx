@@ -48,7 +48,7 @@ export const PaymentPage: React.FC = () => {
     setShowPaymentModal(false);
     setTimeout(() => {
       navigate('/');
-    }, 500);
+    }, 100);
   };
 
   const handleBack = () => {
@@ -164,7 +164,7 @@ export const PaymentPage: React.FC = () => {
             <div className="mb-6">
               <h2 className="text-lg font-semibold mb-4">Selecciona un método de pago</h2>
               <div className="space-y-3">
-                <button
+                {/* <button
                   onClick={() => setPaymentMethod('card')}
                   className={`w-full p-4 rounded-lg border-2 flex items-center ${
                     paymentMethod === 'card'
@@ -181,7 +181,7 @@ export const PaymentPage: React.FC = () => {
                     <p className="font-medium">Tarjeta de crédito/débito</p>
                     <p className="text-sm text-gray-500">Pago seguro con tarjeta</p>
                   </div>
-                </button>
+                </button> */}
 
                 <button
                   onClick={() => setPaymentMethod('mobile')}
