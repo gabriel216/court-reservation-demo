@@ -9,20 +9,6 @@ interface CourtCardProps {
 export const CourtCard: React.FC<CourtCardProps> = ({ court }) => {
   const navigate = useNavigate();
   
-  // Format type for display in Spanish
-  const formatType = (type: string): string => {
-    const typeMap: Record<string, string> = {
-      'tennis': 'Tenis',
-      'basketball': 'Baloncesto',
-      'football': 'Fútbol Americano',
-      'softball': 'Softbol',
-      'soccer': 'Fútbol',
-      'event': 'Eventos'
-    };
-    
-    return typeMap[type] || type;
-  };
-
   return (
     <div
       onClick={() => navigate(`/court/${court.id}`)}
@@ -30,14 +16,20 @@ export const CourtCard: React.FC<CourtCardProps> = ({ court }) => {
     >
       <div className="relative h-48">
         <img
-          src={court.imageUrl}
+          src={court.images[0]}
           alt={court.name}
           className="w-full h-full object-cover"
         />
       </div>
       <div className="p-4">
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">{court.name}</h3>
-        <p className="text-gray-600">{formatType(court.type)}</p>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-lg font-semibold text-gray-900 mr-2">{court.name}</h3>
+          <span className="text-blue-600 font-medium">${court.price.toFixed(2)}/hora</span>
+        </div>
+        <div className="flex items-center text-sm text-gray-500 mb-2">
+          <span className="mr-4">{court.capacity} jugadores</span>
+          <span>{court.surface}</span>
+        </div>
       </div>
     </div>
   );

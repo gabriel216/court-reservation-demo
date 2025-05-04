@@ -1,8 +1,12 @@
 export interface Court {
   id: number;
   name: string;
-  type: 'tennis' | 'basketball' | 'football' | 'softball' | 'soccer' | 'event';
-  imageUrl: string;
+  price: number;
+  capacity: number;
+  surface: string;
+  description: string;
+  type: 'soccer' | 'tennis' | 'basketball' | 'football' | 'softball' | 'event';
+  images: string[];
 }
 
 export interface TimeSlot {
@@ -10,14 +14,15 @@ export interface TimeSlot {
   courtId: number;
   startTime: string;
   endTime: string;
-  isAvailable: boolean;
+  available: boolean;
   date: string;
 }
 
 export interface Reservation {
   id: number;
   courtId: number;
-  timeSlotId: number;
-  userName: string;
   date: string;
+  timeSlot: TimeSlot;
+  userName: string;
+  status: 'pending' | 'confirmed' | 'cancelled';
 }

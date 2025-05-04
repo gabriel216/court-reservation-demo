@@ -1,34 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination } from 'swiper/modules';
-import { format, addDays, startOfWeek } from 'date-fns';
+import { addDays, format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Court, TimeSlot } from '../types';
-import { courts, getTimeSlots } from '../mocks/data';
-import { TimeSlotList } from '../components/TimeSlotList';
-import { ReservationModal } from '../components/ReservationModal';
-import { Notification } from '../components/Notification';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
+import { Navigation, Pagination } from 'swiper/modules';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { ReservationModal } from '../components/ReservationModal';
+import { courts } from '../mocks/data';
+import { Court, TimeSlot } from '../types';
 
 export const CourtDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [court, setCourt] = useState<Court | null>(null);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
-  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [showReservation, setShowReservation] = useState(false);
-  const [notification, setNotification] = useState<{
-    message: string;
-    type: 'success' | 'error';
-  } | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string>(
-    format(new Date(), 'yyyy-MM-dd')
-  );
-  const [weekDays, setWeekDays] = useState<Date[]>([]);
+  const [selectedTimeSlots, setSelectedTimeSlots] = useState<TimeSlot[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+  const [showReservationModal, setShowReservationModal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [weekdays, setWeekdays] = useState<Date[]>([]);
 
   useEffect(() => {
     const courtData = courts.find(c => c.id === Number(id));
@@ -37,195 +30,231 @@ export const CourtDetails: React.FC = () => {
       return;
     }
     setCourt(courtData);
+    setLoading(false);
   }, [id, navigate]);
 
   useEffect(() => {
-    const start = startOfWeek(new Date(), { weekStartsOn: 1 });
-    const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
-    setWeekDays(days);
+    // Generar lista de días de la semana
+    const today = new Date();
+    const tomorrow = addDays(today, 1);
+    const days = Array.from({ length: 14 }, (_, i) => addDays(tomorrow, i));
+    setWeekdays(days);
+    setSelectedDate(format(days[0], 'yyyy-MM-dd'));
   }, []);
 
   useEffect(() => {
-    if (court) {
-      loadTimeSlots(court.id, selectedDate);
+    if (selectedDate) {
+      // Simular carga de horarios disponibles
+      const slots = [
+        { id: 1, startTime: '09:00', endTime: '10:00', available: true },
+        { id: 2, startTime: '10:00', endTime: '11:00', available: true },
+        { id: 3, startTime: '11:00', endTime: '12:00', available: true },
+        { id: 4, startTime: '12:00', endTime: '13:00', available: true },
+        { id: 5, startTime: '13:00', endTime: '14:00', available: true },
+        { id: 6, startTime: '14:00', endTime: '15:00', available: true },
+        { id: 7, startTime: '15:00', endTime: '16:00', available: true },
+        { id: 8, startTime: '16:00', endTime: '17:00', available: true },
+        { id: 9, startTime: '17:00', endTime: '18:00', available: true },
+        { id: 10, startTime: '18:00', endTime: '19:00', available: true },
+        { id: 11, startTime: '19:00', endTime: '20:00', available: true },
+        { id: 12, startTime: '20:00', endTime: '21:00', available: true },
+      ];
+      const slotsWithDetails = slots.map(slot => ({
+        ...slot,
+        courtId: Number(id),
+        date: selectedDate
+      }));
+      setTimeSlots(slotsWithDetails);
     }
-  }, [court, selectedDate]);
+  }, [selectedDate, id]);
 
-  const loadTimeSlots = async (courtId: number, date: string) => {
-    setLoading(true);
-    try {
-      const slots = await getTimeSlots(courtId, date);
-      setTimeSlots(slots);
-    } catch (error) {
-      setNotification({
-        message: 'Error al cargar los horarios. Por favor, intenta de nuevo.',
-        type: 'error',
+  const handleTimeSlotSelect = (slot: TimeSlot) => {
+    if (slot.available) {
+      setSelectedTimeSlots(prev => {
+        const isSelected = prev.some(s => s.id === slot.id);
+        if (isSelected) {
+          return prev.filter(s => s.id !== slot.id);
+        } else {
+          return [...prev, slot];
+        }
       });
-    } finally {
-      setLoading(false);
     }
   };
 
-  const handleReservation = (userName: string) => {
-    if (court && selectedSlot) {
-      setShowReservation(false);
-      navigate('/payment', {
-        state: {
-          court,
-          timeSlot: selectedSlot,
-          userName,
-          date: selectedDate
-        },
-        replace: true
-      });
+  const handleConfirmReservation = (userName: string) => {
+    if (selectedTimeSlots.length === 0) {
+      setError('Por favor selecciona al menos un horario');
+      return;
     }
+
+    navigate('/payment', {
+      state: {
+        court,
+        timeSlots: selectedTimeSlots,
+        date: selectedDate,
+        userName,
+      },
+    });
   };
 
-  if (!court) return null;
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">Cargando...</div>;
+  }
+
+  if (!court) {
+    return <div className="flex justify-center items-center h-screen">Cancha no encontrada</div>;
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto">
         <button
-          onClick={() => navigate('/')}
-          className="mb-6 text-blue-600 hover:text-blue-800 flex items-center"
+          onClick={() => navigate(-1)}
+          className="mb-4 flex items-center text-gray-600 hover:text-gray-900"
         >
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          <svg
+            className="w-5 h-5 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
           Volver
         </button>
 
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">{court.name}</h1>
-        <p className="text-gray-600 mb-8 capitalize">{court.type}</p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+          {/* Card con carrusel */}
+          <div className="bg-white rounded-lg shadow-md p-6 h-fit">
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="text-2xl font-bold text-gray-900">{court.name}</h1>
+              <div className="text-xl font-semibold text-blue-600">
+                ${court.price.toFixed(2)}/hora
+              </div>
+            </div>
+            
+            <div className="relative">
+              <Swiper
+                modules={[Navigation, Pagination]}
+                navigation
+                pagination={{ clickable: true }}
+                className="w-full rounded-lg overflow-hidden"
+              >
+                {court && court.images && court.images.map((image, index) => (
+                  <SwiperSlide key={index}>
+                    <div className="aspect-w-16 aspect-h-9">
+                      <img
+                        src={image}
+                        alt={`${court.name} - Vista ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            </div>
 
-        <div className="mb-12">
-          <Swiper
-            modules={[Navigation, Pagination]}
-            navigation
-            pagination={{ clickable: true }}
-            className="w-full h-[400px] rounded-lg overflow-hidden"
-          >
-            <SwiperSlide>
-              <img
-                src={court.imageUrl}
-                alt={`${court.name} - Vista principal`}
-                className="w-full h-full object-cover"
-              />
-            </SwiperSlide>
-            <SwiperSlide>
-              <img
-                src="/images/softball_field.jpg"
-                alt={`${court.name} - Campo de softbol`}
-                className="w-full h-full object-cover"
-              />
-            </SwiperSlide>
-            <SwiperSlide>
-              <img
-                src="/images/intermediate_court.jpg"
-                alt={`${court.name} - Cancha intermedia`}
-                className="w-full h-full object-cover"
-              />
-            </SwiperSlide>
-            <SwiperSlide>
-              <img
-                src="/images/manuel_carrero_court.jpg"
-                alt={`${court.name} - Cancha Manuel Carrero`}
-                className="w-full h-full object-cover"
-              />
-            </SwiperSlide>
-            <SwiperSlide>
-              <img
-                src="/images/multicancha.jpg"
-                alt={`${court.name} - Multicancha`}
-                className="w-full h-full object-cover"
-              />
-            </SwiperSlide>
-            <SwiperSlide>
-              <img
-                src="/images/salon_ten.jpg"
-                alt={`${court.name} - Salón Ten`}
-                className="w-full h-full object-cover"
-              />
-            </SwiperSlide>
-            <SwiperSlide>
-              <img
-                src="/images/churuata.jpg"
-                alt={`${court.name} - Churuata`}
-                className="w-full h-full object-cover"
-              />
-            </SwiperSlide>
-          </Swiper>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-6">Horarios Disponibles</h2>
-          
-          <div className="grid grid-cols-7 gap-4 mb-6">
-            {weekDays.map((day) => {
-              const dateStr = format(day, 'yyyy-MM-dd');
-              const isSelected = selectedDate === dateStr;
-              return (
-                <button
-                  key={dateStr}
-                  onClick={() => setSelectedDate(dateStr)}
-                  className={`
-                    flex flex-col items-center justify-center p-3 rounded-lg
-                    transition-all duration-200
-                    ${isSelected
-                      ? 'bg-blue-600 text-white shadow-lg scale-105'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }
-                  `}
-                >
-                  <div className="text-sm font-medium mb-1">
-                    {format(day, 'EEE', { locale: es })}
-                  </div>
-                  <div className="text-sm">
-                    {format(day, 'd MMM', { locale: es })}
-                  </div>
-                </button>
-              );
-            })}
+            <div className="mt-4">
+              <p className="text-gray-600">{court.description}</p>
+              <div className="flex items-center text-sm text-gray-500 mt-2">
+                <span className="mr-4">{court.capacity} jugadores</span>
+                <span>{court.surface}</span>
+              </div>
+            </div>
           </div>
 
-          {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+
+          {/* Selector de horarios */}
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Seleccionar fecha</h2>
+              <div className="overflow-x-auto">
+                <div className="flex space-x-4 pb-4">
+                  {weekdays.map((day) => (
+                    <button
+                      key={day.toISOString()}
+                      onClick={() => setSelectedDate(format(day, 'yyyy-MM-dd'))}
+                      className={`flex-shrink-0 px-4 py-2 rounded-lg ${
+                        selectedDate === format(day, 'yyyy-MM-dd')
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <div className="text-center">
+                        <div className="text-sm font-medium">
+                          {format(day, 'EEE', { locale: es })}
+                        </div>
+                        <div className="text-lg font-bold">
+                          {format(day, 'd')}
+                        </div>
+                        <div className="text-xs">
+                          {format(day, 'MMMMMMMMM', { locale: es })}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
-          ) : (
-            <TimeSlotList
-              slots={timeSlots}
-              onSelect={(slot) => {
-                setSelectedSlot(slot);
-                setShowReservation(true);
-              }}
-              selectedSlot={selectedSlot}
-            />
-          )}
+
+            {selectedTimeSlots.length > 0 && (
+              <div className="flex justify-center lg:justify-end">
+                <button
+                  onClick={() => setShowReservationModal(true)}
+                  className="px-6 py-3 rounded-lg font-medium bg-green-600 text-white hover:bg-green-700"
+                >
+                  Reservar ({selectedTimeSlots.length} horarios seleccionados)
+                </button>
+              </div>
+            )}
+
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Horarios disponibles</h2>
+              <div className="grid grid-cols-2 gap-4">
+                {timeSlots.map((slot) => (
+                  <button
+                    key={slot.id}
+                    onClick={() => handleTimeSlotSelect(slot)}
+                    disabled={!slot.available}
+                    className={`p-4 rounded-lg text-center ${
+                      selectedTimeSlots.some(s => s.id === slot.id)
+                        ? 'bg-blue-600 text-white'
+                        : slot.available
+                        ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    <div className="font-medium">{slot.startTime} - {slot.endTime}</div>
+                    <div className="text-sm">
+                      {selectedTimeSlots.some(s => s.id === slot.id) ? 'Seleccionado' : slot.available ? 'Disponible' : 'No disponible'}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                {error}
+              </div>
+            )}
+          </div>
         </div>
-
-        {showReservation && selectedSlot && (
-          <ReservationModal
-            isOpen={showReservation}
-            onClose={() => {
-              setShowReservation(false);
-              setSelectedSlot(null);
-            }}
-            onSubmit={handleReservation}
-            court={court}
-            timeSlot={selectedSlot}
-          />
-        )}
-
-        {notification && (
-          <Notification
-            message={notification.message}
-            type={notification.type}
-            onClose={() => setNotification(null)}
-          />
-        )}
       </div>
+
+      <ReservationModal
+        isOpen={showReservationModal}
+        onClose={() => setShowReservationModal(false)}
+        onSubmit={handleConfirmReservation}
+        court={court}
+        timeSlots={selectedTimeSlots}
+        date={selectedDate}
+      />
     </div>
   );
 }; 
