@@ -33,7 +33,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-gray-900">¡Reserva exitosa!</h2>
-          <p className="text-gray-600 mt-2">Tu reserva ha sido confirmada</p>
+          <p className="text-gray-600 mt-2">Se enviará una confirmación a tu correo electrónico. Con esta podrás validar tu reserva al ingresar</p>
         </div>
 
         <div className="space-y-4">

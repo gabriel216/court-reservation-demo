@@ -21,6 +21,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
   date,
 }) => {
   const [userName, setUserName] = useState('');
+  const [email, setEmail] = useState('');
   const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -87,6 +88,20 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
           />
           {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
         </div>
+        <div className="mb-4">
+          <label htmlFor="userName" className="block text-sm font-medium text-gray-700 mb-1">
+            Correo
+          </label>
+          <input
+            type="text"
+            id="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Ingresa tu nombre correo electrónico"
+          />
+          {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
+        </div>
 
         <div className="flex justify-end space-x-3">
           <button
@@ -96,11 +111,11 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
             Cancelar
           </button>
           <button
-            disabled={userName.length < 2}
+            disabled={userName.length < 2 || email.length < 2}
             type="submit"
             onClick={handleSubmit}
             className={`px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              userName.length < 2
+              userName.length < 2 || email.length < 2
                 ? 'bg-blue-600 opacity-50 cursor-not-allowed'
                 : 'bg-blue-600 hover:bg-blue-700'
             }`}
